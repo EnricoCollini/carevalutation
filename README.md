@@ -26,7 +26,7 @@ La rivendita futura è un'ipotesi esplicita, modificabile dall'utente. Per un us
 
 ## Sviluppo e struttura
 
-- `frontend/`: applicazione Angular.
+- `frontend/`: applicazione Angular, installabile come PWA (manifest + service worker; le chiamate `/api/` non vengono messe in cache).
 - `backend/`: API Flask e modello di calcolo.
 - `docker/`: immagini e configurazione Nginx.
 - `compose.yaml`: orchestrazione di web, API e MySQL.

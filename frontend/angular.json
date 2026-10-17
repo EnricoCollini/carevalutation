@@ -55,7 +55,8 @@
               "src/styles.scss",
               "src/results.scss",
               "src/overrides.scss"
-            ]
+            ],
+            "serviceWorker": true
           },
           "configurations": {
             "production": {
