@@ -34,7 +34,7 @@ export class App implements OnInit {
   activeId: string | null = null;
   nickname = '';
   nicknameDraft = '';
-  sessionTokenDraft = '';
+  sessionPasswordDraft = '';
   sessionOpen = true;
   sessionPending = false;
   sessionError = '';
@@ -147,13 +147,14 @@ export class App implements OnInit {
       this.sessionError = 'Scegli un nickname tra 2 e 32 caratteri.';
       return;
     }
+    if (this.sessionPasswordDraft.length < 6) {
+      this.sessionError = 'La password deve avere almeno 6 caratteri.';
+      return;
+    }
     this.sessionPending = true;
     this.sessionError = '';
-    const rememberedToken = localStorage.getItem(`auto.session.token.${nick.toLocaleLowerCase('it-IT')}`);
-    const activeToken = nick.toLocaleLowerCase('it-IT') === this.nickname.toLocaleLowerCase('it-IT')
-      ? localStorage.getItem('auto.session.token') : null;
-    const token = this.sessionTokenDraft.trim() || rememberedToken || activeToken || '';
-    this.api.session(nick, token).subscribe({
+    const password = this.sessionPasswordDraft;
+    this.api.session(nick, password).subscribe({
       next: data => {
         localStorage.setItem('auto.session.nickname', data.nickname);
         localStorage.setItem('auto.session.token', data.token);
@@ -161,7 +162,7 @@ export class App implements OnInit {
         this.nickname = data.nickname;
         this.sessionOpen = false;
         this.sessionPending = false;
-        this.sessionTokenDraft = '';
+        this.sessionPasswordDraft = '';
         this.activeId = null;
         this.form = blankEvaluation();
         this.result = null;
@@ -171,8 +172,8 @@ export class App implements OnInit {
       },
       error: error => {
         this.sessionPending = false;
-        this.sessionError = error.status === 409
-          ? 'Questo nickname esiste già. Incolla il suo codice di accesso oppure scegli un altro nickname.'
+        this.sessionError = error.status === 401
+          ? 'Password errata per questo nickname.'
           : this.errorText(error);
       },
     });
@@ -180,21 +181,9 @@ export class App implements OnInit {
 
   openSession() {
     this.nicknameDraft = this.nickname;
-    this.sessionTokenDraft = '';
+    this.sessionPasswordDraft = '';
     this.sessionOpen = true;
     this.menuOpen = false;
-  }
-
-  async copyAccessCode() {
-    const token = localStorage.getItem('auto.session.token') || '';
-    if (!token) return;
-    try {
-      await navigator.clipboard.writeText(token);
-      this.flash('Codice copiato. Conservalo in privato.');
-    } catch {
-      this.sessionTokenDraft = token;
-      this.flash('Copia il codice dal campo qui sopra.');
-    }
   }
 
   private loadDraft() {

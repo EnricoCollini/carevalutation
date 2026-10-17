@@ -13,10 +13,8 @@ export class ApiService {
     return { headers: new HttpHeaders({ 'X-Session-Token': token }) };
   }
 
-  session(nickname: string, token = ''): Observable<{ nickname: string; token: string }> {
-    return this.http.post<{ nickname: string; token: string }>(`${this.base}/sessions`, { nickname }, {
-      headers: new HttpHeaders({ 'X-Session-Token': token }),
-    });
+  session(nickname: string, password: string): Observable<{ nickname: string; token: string }> {
+    return this.http.post<{ nickname: string; token: string }>(`${this.base}/sessions`, { nickname, password });
   }
 
   catalog(): Observable<Catalog> {

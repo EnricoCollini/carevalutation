@@ -8,7 +8,7 @@ Con Docker, definire `MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_DATABASE`, `MYSQL_USER` 
 
 ## Accesso
 
-`POST /api/sessions` con `{ "nickname": "Luca" }` crea un profilo e restituisce un codice `token` casuale. Per riaprire lo stesso nickname, inviare il codice nell'intestazione `X-Session-Token` oppure nel campo `token`. Il codice è mostrato una volta e nel database viene conservato soltanto il suo hash. Un nickname già esistente senza codice restituisce `409 nickname_taken`. Salvare il codice in modo privato: chi lo possiede può leggere le valutazioni e il reddito inserito.
+`POST /api/sessions` con `{ "nickname": "Luca", "password": "..." }` crea un profilo la prima volta e restituisce un `token` di sessione casuale. Per riaprire lo stesso nickname inviare nickname e password: se la password è corretta il server genera un nuovo `token`. La password è richiesta (minimo 6 caratteri) e nel database viene conservato soltanto il suo hash, mai in chiaro. Nickname o password errati restituiscono `401 invalid_credentials`. Un profilo creato prima dell'introduzione della password la imposta al primo accesso successivo.
 
 Le rotte per le valutazioni richiedono `X-Session-Token`. Gli ID sono UUID e ogni query è filtrata anche per il proprietario.
 

@@ -14,9 +14,10 @@ from functools import wraps
 
 from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import select, text
+from sqlalchemy import inspect, select, text
 from sqlalchemy.engine import URL
 from sqlalchemy.exc import OperationalError
+from werkzeug.security import check_password_hash, generate_password_hash
 
 from calculator import CalculationError, calculate_evaluation
 
@@ -34,6 +35,7 @@ class User(db.Model):
     nickname = db.Column(db.String(32), nullable=False)
     nickname_key = db.Column(db.String(32), unique=True, nullable=False, index=True)
     token_hash = db.Column(db.String(64), unique=True, nullable=False)
+    password_hash = db.Column(db.String(255), nullable=True)
     created_at = db.Column(db.DateTime(timezone=True), nullable=False, default=utcnow)
     evaluations = db.relationship("Evaluation", back_populates="user", cascade="all, delete-orphan")
 
@@ -107,9 +109,20 @@ def session_required(function):
     def wrapper(*args, **kwargs):
         user = _user_for_token(_token_from_request())
         if user is None:
-            return _json_error(401, "session_required", "Sessione non valida. Inserisci il tuo codice di accesso o scegli un nuovo nickname.")
+            return _json_error(401, "session_required", "Sessione non valida. Accedi di nuovo con nickname e password.")
         return function(user, *args, **kwargs)
     return wrapper
+
+
+def _ensure_schema():
+    """Add columns introduced after the first release, without a migration tool."""
+    inspector = inspect(db.engine)
+    if "users" not in inspector.get_table_names():
+        return
+    columns = {column["name"] for column in inspector.get_columns("users")}
+    if "password_hash" not in columns:
+        db.session.execute(text("ALTER TABLE users ADD COLUMN password_hash VARCHAR(255) NULL"))
+        db.session.commit()
 
 
 def _detail(row):
@@ -187,6 +200,7 @@ def create_app(test_config=None):
                 if attempt == 9 or app.config.get("TESTING"):
                     raise
                 time.sleep(2)
+        _ensure_schema()
 
     @app.after_request
     def no_store(response):
@@ -218,21 +232,32 @@ def create_app(test_config=None):
     def session():
         body = _body()
         nickname = body.get("nickname")
+        password = body.get("password")
         if not isinstance(nickname, str):
             return _json_error(422, "validation_error", "Inserisci un nickname.", "nickname")
         nickname = " ".join(nickname.strip().split())
         if not re.fullmatch(r"[\w .-]{2,32}", nickname, re.UNICODE):
             return _json_error(422, "validation_error", "Usa 2–32 lettere, numeri, spazi, punti, trattini o underscore.", "nickname")
+        if not isinstance(password, str) or len(password) < 6:
+            return _json_error(422, "validation_error", "La password deve avere almeno 6 caratteri.", "password")
+        if len(password) > 128:
+            return _json_error(422, "validation_error", "La password è troppo lunga (massimo 128 caratteri).", "password")
         nickname_key = nickname.casefold()
         existing = db.session.execute(select(User).where(User.nickname_key == nickname_key)).scalar_one_or_none()
-        if existing:
-            token = _token_from_request(body)
-            if _user_for_token(token) == existing:
-                return jsonify({"nickname": existing.nickname, "token": token})
-            return _json_error(409, "nickname_taken", "Nickname già usato. Inserisci il codice di accesso salvato oppure scegli un altro nickname.")
         token = secrets.token_urlsafe(32)
+        token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+        if existing:
+            if existing.password_hash:
+                if not check_password_hash(existing.password_hash, password):
+                    return _json_error(401, "invalid_credentials", "Nickname o password non corretti.")
+            else:
+                # Profilo creato prima dell'introduzione della password: la imposta adesso.
+                existing.password_hash = generate_password_hash(password)
+            existing.token_hash = token_hash
+            db.session.commit()
+            return jsonify({"nickname": existing.nickname, "token": token})
         user = User(id=str(uuid.uuid4()), nickname=nickname, nickname_key=nickname_key,
-                    token_hash=hashlib.sha256(token.encode("utf-8")).hexdigest())
+                    token_hash=token_hash, password_hash=generate_password_hash(password))
         db.session.add(user)
         db.session.commit()
         return jsonify({"nickname": nickname, "token": token}), 201

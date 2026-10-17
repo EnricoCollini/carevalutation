@@ -18,7 +18,7 @@ Per vedere lo stato: `docker compose ps`. Per i log: `docker compose logs -f`. P
 
 ## Utilizzo
 
-Si entra con un nickname e si possono creare e salvare più valutazioni. Al primo accesso viene creato anche un codice privato, conservato nel browser: copialo dal profilo per ritrovare le valutazioni su un altro browser. Il solo nickname non dà accesso ai dati di un altro utente. Se il codice viene perso e il browser viene cancellato, le valutazioni di quel profilo non sono recuperabili dall'interfaccia.
+Si entra con un nickname e una password scelti dall'utente e si possono creare e salvare più valutazioni. La password serve a proteggere il profilo: chi non la conosce non accede alle valutazioni e al reddito salvati. Per ritrovare le valutazioni su un altro browser basta inserire lo stesso nickname e la stessa password. Se la password viene dimenticata, il profilo non è recuperabile dall'interfaccia.
 
 Per ogni auto si indicano prezzo proposto, nuovo/usato, chilometri attuali e annui, anni di possesso, eventuale valutazione dell'auto data in permuta, gestione, assicurazione, gomme, tagliandi, revisione, finanziamento e dati del bilancio. L'app mostra il costo economico mensile, la cassa necessaria, la rivendita stimata, la composizione dei costi e i criteri di sostenibilità.
 
@@ -38,4 +38,4 @@ Per eseguire in locale senza Docker si possono avviare separatamente Angular e F
 
 Prima di aprire il servizio su Internet, configurare un dominio e HTTPS con un certificato valido, password segrete, backup periodici del volume MySQL e aggiornamenti delle immagini. La procedura concreta sulla VPS Aruba verrà definita quando sarà disponibile l'ambiente: questo progetto non richiede modifiche preventive sul server.
 
-L'accesso con nickname e codice privato è pensato per uso personale e semplice. Prima di un'eventuale apertura pubblica, vanno valutati ulteriori controlli sugli accessi e sui dati finanziari. Non inserire dati sensibili nei nickname e non condividere il codice di accesso.
+L'accesso con nickname e password è pensato per uso personale e semplice. Prima di un'eventuale apertura pubblica, vanno valutati ulteriori controlli sugli accessi e sui dati finanziari. Non inserire dati sensibili nei nickname e non condividere la password di accesso.
