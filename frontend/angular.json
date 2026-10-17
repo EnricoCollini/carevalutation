@@ -56,7 +56,7 @@
               "src/results.scss",
               "src/overrides.scss"
             ],
-            "serviceWorker": true
+            "serviceWorker": "ngsw-config.json"
           },
           "configurations": {
             "production": {
