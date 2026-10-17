@@ -1,0 +1,14 @@
+.env
+.venv/
+.venv-audio/
+.audio-models/
+__pycache__/
+.pytest_cache/
+*.pyc
+frontend/node_modules/
+frontend/dist/
+backend/.pytest_cache/
+backend/__pycache__/
+backend/.venv/
+backend/instance/
+.angular/
